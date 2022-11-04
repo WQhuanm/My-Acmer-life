@@ -3,33 +3,25 @@
 using namespace std;
 #define ll     long long
 const int INF = 0x3f3f3f3f;
-const int N = 2e7 + 100;
-int a[N];
-int n, k;
-void fastsort(int begin, int end)
-{
-	int mid = a[(begin + end) / 2];
-	int l = begin, r = end;
-	while (l < r)
-		{
-			while (a[l] < mid)l++;
-			while (a[r] > mid)r--;
-			if (l <= r)
-				{
-					swap(a[r], a[l]);
-					l++, r--;
-				}
-		}
-	if (begin < r && k + 1 <= r)fastsort(begin, r);
-	if (l < end && k + 1 >= l)fastsort(l, end);
-}
+const int N = 2e5 + 100;
+int book[N];
 int main()
 {
-	std::ios::sync_with_stdio(false);
-	std::cin.tie(0);
-	cin >> n >> k;
-	for (int i = 1; i <= n; ++i)cin >> a[i];
-	fastsort(1, n);
-	cout << a[k + 1];
+	int n, m;
+	cin >> n >> m;
+	int a;
+	for (int i = 1; i <= m; ++i)
+		{
+			cin >> a;
+			book[a]++;
+		}
+	for (int i = 1; i <= 1000; ++i)
+		{
+			while (book[i])
+				{
+					cout << i << ' ';
+					book[i]--;
+				}
+		}
 	return 0;
 }
