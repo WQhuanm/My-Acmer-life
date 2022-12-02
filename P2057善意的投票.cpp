@@ -2,42 +2,39 @@
 using namespace std;
 #define ll     long long
 const int INF = 0x3f3f3f3f;
-const int N = 100;
-const int M = 5000;
+const int N = 2e5 + 100;
+const int M = 1000;
 int n, m;
-int num;
-ll ans;
 int head[N];
 int now[N];
-int gap[M << 1];
-int dep[N];
-int le[N][N];
+int gap[N];
+int dep[M];
+int num;
+ll ans;
 struct node
 {
-	ll to, next, w;
-} edge[M << 1];
-
-void add(ll u, ll v, ll w)
+	int to, next, w;
+} edge[N];
+void add(int u, int v)
 {
 	edge[++num].next = head[u];
+	edge[num].w = 1;
 	edge[num].to = v;
-	edge[num].w = w;
 	head[u] = num;
 
 	edge[++num].next = head[v];
 	edge[num].w = 0;
 	edge[num].to = u;
 	head[v] = num;
-
 }
 
 void bfs()
 {
 	memset(dep, -1, sizeof(dep));
-	dep[n] = 0;
+	dep[n + 1] = 0;
 	gap[0]++;
 	queue<int>q;
-	q.push(n);
+	q.push(n + 1);
 	while (!q.empty())
 		{
 			int x = q.front();
@@ -52,14 +49,12 @@ void bfs()
 							gap[dep[v]]++;
 						}
 				}
-
 		}
-
 }
 
 ll dfs(int x, ll sum)
 {
-	if (x == n)
+	if (x == n + 1)
 		{
 			ans += sum;
 			return sum;
@@ -70,7 +65,7 @@ ll dfs(int x, ll sum)
 			now[x] = i;
 			int v = edge[i].to;
 			ll w = edge[i].w;
-			if (dep[v] == dep[x] - 1 && w)//只有w不为0才可以进入，你不能流满了还能流
+			if (dep[v] == dep[x] - 1 && w)
 				{
 					k = dfs(v, min(sum, w));
 					if (!k)continue;
@@ -80,10 +75,9 @@ ll dfs(int x, ll sum)
 					sum -= k;
 					if (!sum)return res;
 				}
-
 		}
 	gap[dep[x]]--;
-	if (!gap[dep[x]])dep[1] = n + 1;
+	if (!gap[dep[x]])dep[0] = n + 4;
 	dep[x]++;
 	gap[dep[x]]++;
 	return res;
@@ -91,38 +85,28 @@ ll dfs(int x, ll sum)
 
 int main()
 {
+
 	cin >> n >> m;
-	ll u, v, w;
-	num = 1;//num初始记得开1
+	int x, y;
+	num = 1;
+	for (int i = 1; i <= n; ++i)
+		{
+			cin >> x;
+			if (x == 1)add(i, 0), add(0, i);
+			if (x == 0)add(i, n + 1), add(n + 1, i);
+		}
 	for (int i = 1; i <= m; ++i)
 		{
-			cin >> u >> v >> w;
-			{
-				add(u, v, w);
-			}
+			cin >> x >> y;
+			add(x, y), add(y, x);
 		}
 	bfs();
 	ans = 0;
-	while (dep[1] < n)
+	while (dep[0] < n + 2)
 		{
 			memcpy(now, head, sizeof(head));
-			dfs(1, INF);
+			dfs(0, INF);
 		}
-	ll ans1 = ans;
-	//以上是普通的最大流求法，先存值，接下来初始化跑割边数量
-	ans = 0;
-	memset(gap, 0, sizeof(gap));//gap深度记得初始化
-	for (int i = 2; i <= num; ++i)//num从2开始修改实际存在的单向边边权
-		{
-			if (!edge[i].w)edge[i].w = 1, edge[i ^ 1].w = 0;//流满为1，没则INF，反向边初始为0
-			else edge[i].w = INF, edge[i ^ 1].w = 0;
-		}
-	bfs();//bfs重新建图
-	while (dep[1] < n)
-		{
-			memcpy(now, head, sizeof(head));//注意，使用memcpy，一定保证两个数组类型相同，一个int，一个ll也会出错
-			dfs(1, INF);
-		}
-	cout << ans1 << ' ' << ans << endl;
+	cout << ans << endl;
 	return 0;
 }
