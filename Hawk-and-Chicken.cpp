@@ -7,37 +7,32 @@ const int INF = 0x3f3f3f3f;         //int型的INF
 const ll llINF = 0x3f3f3f3f3f3f3f3f;//ll型的llINF
 const int N = 5e3 + 10;
 
-int n, m;
-int sta[N], dfn[N], head[N], in[N], scc[N], low[N], hd[N], ct[N];
-bool insta[N], vis[N], du[N];
+int sta[N], scc[N], dfn[N], low[N], head[N], hd[N], sum[N], sz[N];
+bool insta[N], in[N], vis[N];
 int num, cnt, dfncnt, top, num1;
 struct node
 {
-	int next, to;
+	int to, next;
 } edge[30005], eg[30005];
 
 void init()
 {
-	memset(dfn, 0, sizeof(dfn));
 	memset(head, 0, sizeof(head));
 	memset(hd, 0, sizeof(hd));
-	memset(du, 0, sizeof(du));
+	memset(dfn, 0, sizeof(dfn));
 	memset(in, 0, sizeof(in));
-//	memset(scc, 0, sizeof(scc));
-	memset(edge, 0, sizeof(edge));
-	memset(eg, 0, sizeof(eg));
-	memset(ct, 0, sizeof(ct));
-	num = top = cnt = dfncnt = num1 = 0;
+	memset(sum, 0, sizeof(sum));//////////
+	num = num1 = top = dfncnt = cnt = 0;
 }
 
-void add(int u, int v)
+void add(int u, int v)//正向建图
 {
 	edge[++num].next = head[u];
 	edge[num].to = v;
 	head[u] = num;
 }
 
-void add1(int u, int v)
+void add1(int u, int v)//反向建图
 {
 	eg[++num1].next = hd[u];
 	eg[num1].to = v;
@@ -62,76 +57,62 @@ void tarjan(int u)
 	if (dfn[u] == low[u])
 		{
 			++cnt;
+			sz[cnt] = 0;//sz数组存储每个环内点的数量，一个环（x人）给人的票一次就是x，自己内部赞赏是x-1
 			while (1)
 				{
 					int v = sta[top--];
 					insta[v] = 0;
-					++ct[cnt];
 					scc[v] = cnt;
+					++sz[cnt];
 					if (u == v)break;
 				}
 		}
 }
 
-int dfs(int u)
+int dfs(int u)//求指向u的票，只需要u自己内部赞同票加上他指向的点所获得的票
 {
-	int sum = ct[u];
+	vis[u] = 1;
+	int ans = sz[u];
 	for (int i = hd[u]; i; i = eg[i].next)
 		{
 			int v = eg[i].to;
-			if (!vis[v])
-				{
-					vis[v] = 1;
-					sum += dfs(v);
-				}
+			if (!vis[v])ans += dfs(v);
 		}
-	return sum;
+	return ans;
 }
 
 int main()
 {
 	std::ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
-	int t, t1 = 0;
+	int t, t1 = 0, n, m, x, y;
 	cin >> t;
+
 	while (t--)
 		{
-			init();
 			++t1;
+			init();
 			cin >> n >> m;
-			int x, y;
-			for (int i = 1; i <= m; ++i)
-				{
-					cin >> x >> y;
-					add(x, y);
-				}
+			for (int i = 1; i <= m; ++i)cin >> x >> y, add(x, y);
 			for (int i = 0; i < n; ++i)if (!dfn[i])tarjan(i);
-
 			for (int i = 0; i < n; ++i)
 				{
 					int u = scc[i];
 					for (int j = head[i]; j; j = edge[j].next)
 						{
 							int v = scc[edge[j].to];
-							if (u != v)add1(v, u), du[u] = 1;
+							if (u != v)add1(v, u), in[u] = 1;//反向建环的图
 						}
 				}
 			int ans = -1;
 			for (int i = 1; i <= cnt; ++i)
 				{
-					if (!du[i])
-						{
-							memset(vis, 0, sizeof(vis));
-							vis[i] = 1;
-							in[i] = dfs(i) - 1;
-							ans = max(ans, in[i]);
-						}
+					if (!in[i])	memset(vis, 0, sizeof(vis)), sum[i] = dfs(i) - 1, ans = max(ans, sum[i]);//没有被指向的，每次重置标记，求其值，最后sum-1，就是因为环内部认同是x-1
 				}
 			cout << "Case " << t1 << ": " << ans << endl;
-			//	printf("Case %d: %d\n", t1, ans);
 			bool flag = 1;
 			for (int i = 0; i < n; ++i)
 				{
-					if (in[scc[i]] == ans)
+					if (sum[scc[i]] == ans)
 						{
 							if (flag)flag = 0, cout << i;
 							else cout << ' ' << i;
