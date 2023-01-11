@@ -67,15 +67,15 @@ void tarjan(int u)
 		}
 }
 
-int tfind(int u)
+int tfind(int u)//寻找u是否可以连出线，有返回1，匹配数+1
 {
 	for (int i = hd[u]; i; i = eg[i].next )
 		{
 			int v = eg[i].to;
-			if (!vis[v])
+			if (!vis[v])//v点是否被匹配过
 				{
-					vis[v] = 1;
-					if (!match[v] || tfind(match[v]))
+					vis[v] = 1;//更改vis写在里面，被匹配是右边的事，放外面会误标记左边找匹配的点
+					if (!match[v] || tfind(match[v]))//没有被匹配，或者原来匹配值回去可以找到其他匹配点（就会返回1），或者写法，是判断有无被匹配在前，有才访问||后面的内容
 						{
 							match[v] = u;
 							return 1;
@@ -96,7 +96,7 @@ int main()
 			cin >> n >> m;
 			for (int i = 1; i <= m; ++i)cin >> x >> y, add(x, y);
 			for (int i = 1; i <= n; ++i)if (!dfn[i])tarjan(i);
-			for (int i = 1; i <= n; ++i)
+			for (int i = 1; i <= n; ++i)//缩点重新建图
 				{
 					int u = scc[i];
 					for (int j = head[i]; j; j = edge[j].next)
