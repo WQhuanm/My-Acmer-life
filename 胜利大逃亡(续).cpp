@@ -10,13 +10,13 @@ const ll llINF = 0x3f3f3f3f3f3f3f3f;//ll型的llINF
 const int N = 25;
 
 char a[N][N];
-int n, m, t, sx, sy, ex, ey;
+int n, m, t, sx, sy;
+bool vis[N][N][1100];
 int w[5][3] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
-bool vis[N][N][1050];
+
 struct node
 {
 	int x, y, t, num;
-
 } head, tmp;
 
 void bfs()
@@ -25,12 +25,10 @@ void bfs()
 	queue<node>q;
 	head.x = sx, head.y = sy, head.t = 0, head.num = 0;
 	q.push(head);
-	vis[sx][sy][0] = 1;
 	while (!q.empty())
 		{
 			head = q.front();
 			q.pop();
-			//	cout << head.x << ' ' << head.y << ' ' << head.t << endl;
 			if (a[head.x][head.y] == '^' && head.t < t)
 				{
 					cout << head.t << endl;
@@ -46,8 +44,8 @@ void bfs()
 								{
 									if (a[tmp.x][tmp.y] >= 'A' && a[tmp.x][tmp.y] <= 'Z')
 										{
-											int k = a[tmp.x][tmp.y] - 'A';
-											if (((tmp.num) >> k) & 1)
+											int k = a[tmp.x][tmp.y] - 'A';//num的二进制第k位为1，表示有这把钥匙，我才可以进这个门
+											if ((tmp.num >> k) & 1)
 												{
 													vis[tmp.x][tmp.y][tmp.num] = 1;
 													q.push(tmp);
@@ -56,13 +54,12 @@ void bfs()
 									else if (a[tmp.x][tmp.y] >= 'a' && a[tmp.x][tmp.y] <= 'z')
 										{
 											int k = a[tmp.x][tmp.y] - 'a';
-											tmp.num |= (1 << k);
-											if (!	vis[tmp.x][tmp.y][tmp.num])
+											tmp.num |= (1 << k);//只有过钥匙点，一定拿到钥匙，所以状态改变一般不用+，而是直接num这个第k位用|运算保证是1
+											if (!vis[tmp.x][tmp.y][tmp.num])//num更新，查询如果没有访问过，访问
 												{
 													vis[tmp.x][tmp.y][tmp.num] = 1;
 													q.push(tmp);
 												}
-
 										}
 									else
 										{
@@ -74,7 +71,6 @@ void bfs()
 				}
 
 		}
-
 	cout << -1 << endl;
 }
 
@@ -86,7 +82,6 @@ int main()
 					{
 						cin >> a[i][j];
 						if (a[i][j] == '@')sx = i, sy = j;
-						else if (a[i][j] == '^')ex = i, ey = j;
 					}
 			bfs();
 		}
