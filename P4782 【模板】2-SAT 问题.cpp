@@ -67,8 +67,8 @@ int main()
 			add(x + n * (!a), y + n * (b));
 			add(y + n * (!b), x + n * a);
 		}
-	for (int i = 1; i <= 2 * n; ++i)if (!dfn[i])tarjan(i);
-	for (int i = 1; i <= n; ++i)if (scc[i] == scc[i + n])
+	for (int i = 1; i <= 2 * n; ++i)if (!dfn[i])tarjan(i);//一共n个集合，2*n个元素，对所以元素跑tarjan
+	for (int i = 1; i <= n; ++i)if (scc[i] == scc[i + n])//对n个集合判断是否有成环（不成立）
 			{
 				cout << "IMPOSSIBLE" << endl;
 				return 0;
