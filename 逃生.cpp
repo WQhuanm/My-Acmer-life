@@ -9,10 +9,9 @@ typedef pair<int, int> pii;
 //std::ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
 const int INF = 0x3f3f3f3f;         //int型的INF
 const ll llINF = 0x3f3f3f3f3f3f3f3f;//ll型的llINF
-const int N = 2e5 + 10;
+const int N = 1e5 + 10;
 
-int head[N], in[N], a[N];
-int num;
+int head[N], in[N], h[N], num;
 struct node
 {
 	int next, to;
@@ -28,47 +27,40 @@ void add(int u, int v)
 int main()
 {
 	std::ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
-	int t, n, m, u1, v1;
+	int n, m, t, a, b;
 	cin >> t;
 	while (t--)
 		{
-			priority_queue<int>q;
 			memset(head, 0, sizeof(head));
-			memset(in, 0, sizeof(in));
 			num = 0;
+			memset(in, 0, sizeof(in));
 			int k = 0;
 			cin >> n >> m;
 			for (int i = 1; i <= m; ++i)
 				{
-					cin >> v1 >> u1;///////////////
-					add(u1, v1);
-					in[v1]++;
+					cin >> a >> b;
+					add(b, a);
+					in[a]++;
 				}
-			for (int i = 1; i <= n; ++i)
-				{
-					if (!in[i])q.push(i);
-				}
+			priority_queue<int>q;//优先队列把序号大的序号为0的先输出
+			for (int i = 1; i <= n; ++i)if (!in[i])q.push(i);
 			while (!q.empty())
 				{
 					int u = q.top();
 					q.pop();
-					a[++k] = u;
+					h[++k] = u;
 					for (int i = head[u]; i; i = edge[i].next)
 						{
 							int v = edge[i].to;
-							if ((--in[v] ) == 0)//////////
-								{
-									q.push(v);
-								}
+							if (--in[v] == 0)q.push(v);//入度为0就可以存入
 						}
 				}
-			for (int i = k; i >= 1; --i)
+			for (int i = k; i >= 1; --i)//反向输出
 				{
-					cout << a[i];
+					cout << h[i];
 					if (i == 1)cout << endl;
 					else cout << ' ';
 				}
-
 		}
 	return 0;
 }
