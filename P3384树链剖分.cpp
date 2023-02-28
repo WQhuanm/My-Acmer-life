@@ -119,7 +119,7 @@ void treeadd(int x, int y, ll z)
 {
 	while (topfa[x] != topfa[y])
 		{
-			if (dep[topfa[x]] < dep[topfa[y]])swap(x, y);
+			if (dep[topfa[x]] < dep[topfa[y]])swap(x, y);////
 			update(idx[topfa[x]], idx[x], 1, z);
 			x = fa[topfa[x]];
 		}
