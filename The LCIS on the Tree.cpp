@@ -3,6 +3,9 @@ using namespace std;
 #define ll     long long
 const int N = 1e5 + 10;
 
+int a[N], b[N], top[N], tot[N], dep[N], head[N], son[N], fa[N], idx[N];
+int num, cnt, n, m;
+
 struct node
 {
 	int next, to;
@@ -10,26 +13,19 @@ struct node
 
 struct tree
 {
-	int l, r;
-	int fl, sl, fr, sr, size;
-	int lnum, rnum;
+	int l, r, lnum, rnum, size;
+	int fl, fr, sl, sr;
 	int fmaxn, smaxn;
-
 	void init()
 	{
-		fl = sl = fr = sr = size = fmaxn = smaxn = 0;
+		lnum = rnum = fl = fr = sl = sr = size = fmaxn = smaxn = 0;
 	}
-	void reverse()
+	void reverse()//用于把这个tree区间左右信息互换
 	{
-		swap(lnum, rnum);
+		swap(fl, sr), swap(sl, fr), swap(lnum, rnum);
 		swap(fmaxn, smaxn);
-		swap(fl, sr), swap(sl, fr);
 	}
-
-} t[4 * N + 2];
-
-int a[N], b[N], head[N << 1], tot[N], fa[N], son[N], dep[N], top[N], idx[N];
-int num, cnt, n;
+} t[4 * N];
 
 void add(int u, int v)
 {
@@ -37,20 +33,17 @@ void add(int u, int v)
 	edge[num].to = v;
 	head[u] = num;
 }
-
 void init()
 {
 	memset(head, 0, sizeof(head));
-	memset(idx, 0, sizeof(idx));
 	num = cnt = 0;
 }
 
 void dfs1(int u, int f)
 {
 	fa[u] = f;
-	tot[u] = 1;
 	dep[u] = dep[f] + 1;
-	son[u] = 0;
+	tot[u] = 1, son[u] = idx[u] = 0;
 	int maxn = -1;
 	for (int i = head[u]; i; i = edge[i].next)
 		{
@@ -58,7 +51,7 @@ void dfs1(int u, int f)
 			if (v == f)continue;
 			dfs1(v, u);
 			tot[u] += tot[v];
-			if (tot[v] > maxn)son[u] = v, maxn = tot[v];
+			if (tot[v] > maxn)maxn = tot[v], son[u] = v;
 		}
 }
 
@@ -78,11 +71,12 @@ void dfs2(int u, int topfa)
 
 tree unit(tree l, tree r)
 {
+	if (!l.size)return r;//如果左树没用节点（为空），那直接放回右部分即可
+	if (!r.size)return l;//同理
 	tree t;
-	t.init();
 	t.l = l.l, t.r = r.r;
-	t.lnum = l.lnum, t.rnum = r.rnum, t.size = l.size + r.size;
-
+	t.size = l.size + r.size;//sized等于左边加右边
+	t.lnum = l.lnum, t.rnum = r.rnum;
 	t.fl = l.fl;
 	if (l.fl == l.size && l.rnum > r.lnum)t.fl += r.fl;
 	t.sl = l.sl;
@@ -91,14 +85,14 @@ tree unit(tree l, tree r)
 	if (r.fr == r.size && l.rnum > r.lnum)t.fr += l.fr;
 	t.sr = r.sr;
 	if (r.sr == r.size && l.rnum < r.lnum)t.sr += l.sr;
+	//以降序fmaxn为例，更新时要么去左边的fmaxn，要么右边的fmaxn，要么如果两边符合端点l.rnum > r.lnum，则可以多算中间一段
+	t.fmaxn = max(l.fmaxn, max(r.fmaxn, (l.rnum > r.lnum ? l.fr + r.fl : 0)));
+	t.smaxn = max(l.smaxn, max(r.smaxn, (l.rnum < r.lnum ? l.sr + r.sl : 0)));
 
-	t.fmaxn = max({l.fmaxn, r.fmaxn, (l.rnum > r.lnum ? l.fr + r.fl : 0)});
-	t.smaxn = max({l.smaxn, r.smaxn, (l.rnum < r.lnum ? l.sr + r.sl : 0)});
-
-	return  t;
+	return t;
 }
 
-void change (int p)
+void change(int p)
 {
 	t[p] = unit(t[p << 1], t[p << 1 | 1]);
 }
@@ -108,10 +102,9 @@ void build(int l, int r, int p)
 	t[p].l = l, t[p].r = r;
 	if (l == r)
 		{
-			t[p].fl = t[p].fr = t[p].sl  = t[p].sr = t[p].size = 1;
 			t[p].lnum = t[p].rnum = a[l];
-			t[p].fmaxn = t[p].smaxn = 1;
-			return;
+			t[p].size = t[p].fmaxn = t[p].smaxn = t[p].fl = t[p].sl = t[p].sr = t[p].fr = 1;
+			return ;
 		}
 	int mid = l + ((r - l) >> 1);
 	build(l, mid, p << 1);
@@ -121,54 +114,44 @@ void build(int l, int r, int p)
 
 tree ask(int l, int r, int p)
 {
-	if (l <= t[p].l && t[p].r <= r)
-		{
-			return t[p];
-		}
+	if (l <= t[p].l && t[p].r <= r)return t[p];
 	int mid = t[p].l + ((t[p].r - t[p].l) >> 1);
+	//如果l，r范围只在左右区间一边，直接返回那一边得到的tree即可
 	if (r <= mid)return ask(l, r, p << 1);
 	if (l > mid)return ask(l, r, p << 1 | 1);
-
 	tree t, tl, tr;
-	t.init();
 	tl = ask(l, r, p << 1), tr = ask(l, r, p << 1 | 1);
 	return (t = unit(tl, tr));
 }
 
-tree treeunit(tree l, tree r)
-{
-	if (!l.size)return r;
-	if (!r.size)return l;
-	tree t;
-	t.init();
-	return (t = unit(l, r));
-}
-
 int treeask(int x, int y)
 {
-	tree l, r;
-	l.init(), r.init();
 	bool flag = 0;
+	tree l, r;
+	//我们刚刚开始tree是空的，记得初始化，否则与别人连接出问题
+	l.init();
+	r.init();
 	while (top[x] != top[y])
 		{
-			if (dep[top[x]] < dep[top[y]])swap(x, y), swap(l, r), flag ^= 1;
+			if (dep[top[x]] < dep[top[y]])swap(x, y), swap(l, r), flag ^= 1;//x,y每次翻转记录一下
 			tree tmp = ask(idx[top[x]], idx[x], 1);
-			l = treeunit(tmp, l);
+			l = unit(tmp, l);//越往上的段在左边
 			x = fa[top[x]];
 		}
 	if (dep[x] > dep[y])swap(x, y), swap(l, r), flag ^= 1;
-	tree tmp = ask(idx[x], idx[y], 1);
+	tree tmp = ask(idx[x], idx[y], 1);//x深度小于y，则这一段跟y的链拼接
 	r = unit(tmp, r);
-	if (flag)swap(l, r);
-	l.reverse();
-	return treeunit(l, r).smaxn;
+	if (flag)swap(l, r);//如果翻转奇数次，那么我们最后得出结果是y->x，所以我们需要否则回来
+	l.reverse();//最后是x的顶端拼接y的端点，显然需要将x左右翻转
+	return unit(l, r).smaxn;
 }
+
 int main()
 {
 	std::ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
-	int t, x, q, y;
+	int t, x, y;
 	cin >> t;
-	for (int t1 = 1; t1 <= t; ++t1)
+	for (int ti = 1; ti <= t; ++ti)
 		{
 			init();
 			cin >> n;
@@ -181,14 +164,15 @@ int main()
 			dfs1(1, 0);
 			dfs2(1, 1);
 			build(1, n, 1);
-			cin >> q;
-			cout << "Case #" << t1 << ":" << endl;
-			while (q--)
+			cin >> m;
+			cout << "Case #" << ti << ":" << endl;
+			while (m--)
 				{
 					cin >> x >> y;
 					cout << treeask(x, y) << endl;
 				}
-			if (t1 < t)cout << endl;
+			if (ti < t)cout << endl;
 		}
+
 	return 0;
 }

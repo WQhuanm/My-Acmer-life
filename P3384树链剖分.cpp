@@ -1,28 +1,21 @@
 #include <bits/stdc++.h>
 using namespace std;
 #define ll     long long
-//#define int ll
-typedef unsigned long long ull;
-typedef pair<long long, long long> pll;
-typedef pair<int, int> pii;
-
-//double 型memset最大127，最小128
-//std::ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
-const int INF = 0x3f3f3f3f;         //int型的INF
-const ll llINF = 0x3f3f3f3f3f3f3f3f;//ll型的llINF
+#define int ll
 const int N = 1e5 + 10;
 
-int a[N], b[N], n, m, r, mod, num, head[N << 1], tot[N], dep[N], fa[N], son[N], cnt, topfa[N], idx[N];
-struct tree
-{
-	int l, r;
-	ll sum, add;
-} t[4 * N + 2];
-
+int n, m, r, mod, num, cnt;
+int head[N], tot[N], dep[N], fa[N], son[N], top[N], idx[N];
+int a[N], b[N];
 struct node
 {
 	int next, to;
 } edge[N << 1];
+struct tree
+{
+	int l, r;
+	int sum, add;
+} t[4 * N + 2];
 
 void add(int u, int v)
 {
@@ -31,6 +24,37 @@ void add(int u, int v)
 	head[u] = num;
 }
 
+void dfs1(int u, int f)
+{
+	fa[u] = f;//存储u点父亲
+	dep[u] = dep[f] + 1;//深度是父亲深度+1
+	tot[u] = 1, son[u] = idx[u] = 0;//tot是子节点（包括自己）的数量，son是重儿子，idx是u的重新编号，对这3个初始化
+	int maxn = -1;
+	for (int i = head[u]; i; i = edge[i].next)
+		{
+			int v = edge[i].to;
+			if (v == f)continue;
+			dfs1(v, u);
+			tot[u] += tot[v];//增加u的子节点数
+			if (tot[v] > maxn)maxn = tot[v], son[u] = v;//更新重儿子
+		}
+}
+
+void dfs2(int u, int topfa)
+{
+	top[u] = topfa;//记录链顶点
+	idx[u] = ++cnt;//新编号，从根节点的1不断编号
+	a[cnt] = b[u];//把原来编号的值存入新编号的值
+	if (!son[u])return;//如果没用儿子就不用往下
+	dfs2(son[u], topfa);//有儿子先访问重儿子（重儿子优先编号）
+	for (int i = head[u]; i; i = edge[i].next)
+		{
+			int v = edge[i].to;
+			if (!idx[v])dfs2(v, v);//idx为0，说明没用编号（也说明一定不是重儿子），进行编号，v自己是轻链顶点
+		}
+}
+
+//---------以下是线段树代码-------//
 void build(int l, int r, int p)
 {
 	t[p].l = l, t[p].r = r;
@@ -75,78 +99,57 @@ void update(int l, int r, int p, ll z)
 
 ll ask(int l, int r, int p)
 {
-	if (l <= t[p].l && t[p].r <= r)	return t[p].sum % mod;
-
+	if (l <= t[p].l && t[p].r <= r)return t[p].sum % mod;
 	lazy(p);
-	ll ans = 0;
 	int mid = t[p].l + ((t[p].r - t[p].l) >> 1);
+	ll ans = 0;
 	if (l <= mid)ans = (ans + ask(l, r, p << 1)) % mod;
 	if (r > mid)ans = (ans + ask(l, r, p << 1 | 1)) % mod;
 	return ans;
 }
-
-void dfs1(int u, int f)
-{
-	dep[u] = dep[f] + 1;
-	fa[u] = f;
-	tot[u] = 1;
-	int maxn = -1;
-	for (int i = head[u]; i; i = edge[i].next)
-		{
-			int v = edge[i].to;
-			if (v == f)continue;
-			dfs1(v, u);
-			tot[u] += tot[v];
-			if (tot[v] > maxn)maxn = tot[v], son[u] = v;
-		}
-}
-
-void dfs2(int u, int topf)
-{
-	idx[u] = ++cnt;
-	a[cnt] = b[u];
-	topfa[u] = topf;
-	if (!son[u])return;
-	dfs2(son[u], topf);
-	for (int i = head[u]; i; i = edge[i].next)
-		{
-			int v = edge[i].to;
-			if (!idx[v])dfs2(v, v);
-		}
-}
+//------以上是线段树代码------//
 
 void treeadd(int x, int y, ll z)
 {
-	while (topfa[x] != topfa[y])
+	while (top[x] != top[y])//不是同一条链，就更新到是为止
 		{
-			if (dep[topfa[x]] < dep[topfa[y]])swap(x, y);////
-			update(idx[topfa[x]], idx[x], 1, z);
-			x = fa[topfa[x]];
+			if (dep[top[x]] < dep[top[y]])swap(x, y);//为了方便，始终保持x所在链的顶点深度大（注意，比较的是顶点深度，不是x与y深度
+			update(idx[top[x]], idx[x], 1, z);//链是连续区间，直接线段树更新
+			x = fa[top[x]];//x成为顶点父亲
 		}
-	if (dep[x] > dep[y])swap(x, y);
+	if (dep[x] > dep[y])swap(x, y);//出来后，为了方便，让x深度小，因为我们的线段树必须更新小编号到大编号
 	update(idx[x], idx[y], 1, z);
 }
 
-ll treesum(int x, int y)
+ll treeask(int x, int y)
 {
 	ll ans = 0;
-	while (topfa[x] != topfa[y])
+	while (top[x] != top[y])//不是同一条链，就不断累加经过的链的区间的值
 		{
-			if (dep[topfa[x]] < dep[topfa[y]])swap(x, y);
-			ans = (ans + ask(idx[topfa[x]], idx[x], 1)) % mod;
-			x = fa[topfa[x]];
+			if (dep[top[x]] < dep[top[y]])swap(x, y);
+			ans = (ans + ask(idx[top[x]], idx[x], 1)) % mod;
+			x = fa[top[x]];
 		}
 	if (dep[x] > dep[y])swap(x, y);
 	ans = (ans + ask(idx[x], idx[y], 1)) % mod;
-	return ans;
+	return ans % mod;
+}
+//这模板题用不到
+ll lca(int u, int v)
+{
+	while (top[u] != top[v])
+		{
+			if (dep[top[u]] > dep[top[v]])u = fa[top[u]];//所在链顶点深度大的求往祖先跳
+			else v = fa[top[v]];
+		}
+	return dep[u] > dep[v] ? v : u;
 }
 
 int32_t main()
 {
-	std::ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
 	cin >> n >> m >> r >> mod;
 	for (int i = 1; i <= n; ++i)cin >> b[i];
-	int x, y;
+	int h, x, y, z;
 	for (int i = 1; i < n; ++i)
 		{
 			cin >> x >> y;
@@ -155,26 +158,25 @@ int32_t main()
 	dfs1(r, 0);
 	dfs2(r, r);
 	build(1, n, 1);
-	ll a1, z;
-	for (int i = 1; i <= m; ++i)
+	while (m--)
 		{
-			cin >> a1;
-			if (a1 == 1)
+			cin >> h;
+			if (h == 1)
 				{
 					cin >> x >> y >> z;
-					treeadd(x, y, z % mod);
+					treeadd(x, y, z);
 				}
-			else if (a1 == 2)
+			else if (h == 2)
 				{
 					cin >> x >> y;
-					cout << treesum(x, y) << endl;
+					cout << treeask(x, y) << endl;
 				}
-			else if (a1 == 3)
+			else if (h == 3)
 				{
 					cin >> x >> z;
-					update(idx[x], idx[x] + tot[x] - 1, 1, z % mod);
+					update(idx[x], idx[x] + tot[x] - 1, 1, z);
 				}
-			else if (a1 == 4)
+			else if (h == 4)
 				{
 					cin >> x;
 					cout << ask(idx[x], idx[x] + tot[x] - 1, 1) << endl;
