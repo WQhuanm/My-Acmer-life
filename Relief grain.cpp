@@ -2,16 +2,15 @@
 using namespace std;
 #define ll     long long
 const int N = 1e5 + 10;
-
-int head[N], tot[N], fa[N], top[N], son[N], idx[N], dep[N], back[N], ans[N];
-int num, cnt, n, m;
+int head[N], tot[N], dep[N], top[N], son[N], fa[N], back[N], idx[N], ans[N];
+int num, cnt;
+int n, m;
 vector<int>v[N];
 struct tree
 {
 	int l, r;
-	int num, cnt;
+	int cnt, max;//cnt表示区间数量最多的数字的数量，max表示数量最多的数字
 } t[N << 2];
-
 struct node
 {
 	int next, to;
@@ -20,8 +19,8 @@ struct node
 void init()
 {
 	memset(head, 0, sizeof(head));
-	for (int i = 1; i <= n + 1; ++i)v[i].clear(); ///////////////区间push有加一的原因，更新n+1个点
-	num = cnt = 0;
+	for (int i = 1; i <= n + 1; ++i)v[i].clear();//因为差分的原因（尾点+1），我们实际更新了n+1个点
+	cnt = num = 0;
 }
 
 void add(int u, int v)
@@ -33,8 +32,8 @@ void add(int u, int v)
 
 void dfs1(int u, int f)
 {
-	fa[u] = f;
 	dep[u] = dep[f] + 1;
+	fa[u] = f;
 	tot[u] = 1;
 	idx[u] = son[u] = 0;
 	int maxn = -1;
@@ -64,12 +63,11 @@ void dfs2(int u, int topfa)
 
 void build(int l, int r, int p)
 {
-	if (l > r)return;//传入的r不一定大于l
-	t[p].l = l, t[p].r = r;
-	t[p].num = t[p].cnt = 0;
+	if (l > r)return;
+	t[p].l = l, t[p].r = r, t[p].cnt = 0;//初始化
 	if (l == r)
 		{
-			t[p].num = l;
+			t[p].max = l;
 			return;
 		}
 	int mid = l + ((r - l) >> 1);
@@ -77,26 +75,18 @@ void build(int l, int r, int p)
 	build(mid + 1, r, p << 1 | 1);
 }
 
-void update(int p, int w, int val)
+void update(int id, int p, int w)
 {
-	if (w == t[p].l && w == t[p].r)
+	if (t[p].l == id && id == t[p].r)
 		{
-			t[p].cnt += val;
+			t[p].cnt += w;
 			return;
 		}
 	int mid = t[p].l + ((t[p].r - t[p].l) >> 1);
-	if (w <= mid)update(p << 1, w, val);
-	else update(p << 1 | 1, w, val);
-	if (t[p << 1].cnt >= t[p << 1 | 1].cnt)
-		{
-			t[p].cnt = t[p << 1].cnt;
-			t[p].num = t[p << 1].num;
-		}
-	else
-		{
-			t[p].cnt = t[p << 1 | 1].cnt;
-			t[p].num = t[p << 1 | 1].num;
-		}
+	if (mid >= id)update(id, p << 1, w);
+	if (mid < id)update(id, p << 1 | 1, w);
+	if (t[p << 1].cnt >= t[p << 1 | 1].cnt)t[p].cnt = t[p << 1].cnt, t[p].max = t[p << 1].max;
+	else t[p].cnt = t[p << 1 | 1].cnt, t[p].max = t[p << 1 | 1].max;
 }
 
 void treeupdate(int x, int y, int w)
@@ -104,41 +94,41 @@ void treeupdate(int x, int y, int w)
 	while (top[x] != top[y])
 		{
 			if (dep[top[x]] < dep[top[y]])swap(x, y);
-			v[idx[top[x]]].push_back(w), v[idx[x] + 1].push_back(-w);
+			v[idx[top[x]]].push_back(w);
+			v[idx[x] + 1].push_back(-w);
 			x = fa[top[x]];
 		}
 	if (dep[x] > dep[y])swap(x, y);
-	v[idx[x]].push_back(w), v[idx[y] + 1].push_back(-w);
+	v[idx[x]].push_back(w), v[idx[y] + 1].push_back(-w);//v数组存储每个点的差分信息
 }
 
 int main()
 {
 	std::ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
-	int  x, y, w;
 	while (cin >> n >> m && (n || m))
 		{
 			init();
+			int x, y, w, maxn = 0;
 			for (int i = 1; i < n; ++i)cin >> x >> y, add(x, y), add(y, x);
 			dfs1(1, 0);
 			dfs2(1, 1);
-			int maxn = 0;
 			while (m--)
 				{
 					cin >> x >> y >> w;
-					treeupdate(x, y, w);
+					treeupdate(x, y, w);//存储树上差分
 					maxn = max(maxn, w);
 				}
-			t[1].cnt = 0;//防止传入r大于l导致没有清空上一次的值
-			build(1, maxn, 1);
-			for (int i = 1; i <= n; ++i)
+			t[1].cnt = 0;
+			build(1, maxn, 1);//建立空的权值线段树
+			for (int i = 1; i <= n; ++i)//从1开始维护
 				{
 					for (int j = 0; j < (int)v[i].size(); ++j)
 						{
-							if (v[i][j] > 0)update(1, v[i][j], 1);
-							else update(1, -v[i][j], -1);
+							if (v[i][j] > 0)update(v[i][j], 1, 1);
+							else update(-v[i][j], 1, -1);//权值为负，即是食物w分配区间的尽头，之后的点要减少了
 						}
-					if (t[1].cnt > 0)ans[back[i]] = t[1].num;
-					else ans[back[i]] = 0;
+					ans[back[i]] = 0;
+					if (t[1].cnt > 0)ans[back[i]] = t[1].max;//只有cnt大于0，才说明有食物
 				}
 			for (int i = 1; i <= n; ++i)cout << ans[i] << endl;
 		}
