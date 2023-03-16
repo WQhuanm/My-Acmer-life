@@ -1,19 +1,9 @@
 #include <bits/stdc++.h>
 using namespace std;
 #define ll     long long
-typedef unsigned long long ull;
-typedef pair<long long, long long> pll;
-typedef pair<int, int> pii;
-
-//double 型memset最大127，最小128
-//std::ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
-const int INF = 0x3f3f3f3f;         //int型的INF
-const ll llINF = 0x3f3f3f3f3f3f3f3f;//ll型的llINF
 const int N = 110;
-
 int dp[N][30][30][30];
 int a[N][5];
-
 int main()
 {
 	int n;
@@ -28,6 +18,5 @@ int main()
 						dp[i][j][k][h + 1] = max(dp[i][j][k][h + 1], tmp + a[i][3]);
 					}
 	cout << dp[n][n / 4][n / 4][n / 4] << endl;
-
 	return 0;
 }
