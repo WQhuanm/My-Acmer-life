@@ -3,9 +3,7 @@ using namespace std;
 #define ll               long long
 #define endl             "\n"
 #define endll            endl<<endl
-
 const int N = 12000;
-
 string s[N];
 bool vis[N];
 string b;
@@ -14,7 +12,7 @@ bool flag;
 int m,k;
 void dfs(int num,int p)
 {
-	if(num==m)
+	if(num==m)//如果能m段匹配完，说明是正确答案，不用再dfs了
 		{
 			flag=1;
 			return;
@@ -50,7 +48,6 @@ void mysolve()
 	int n;
 	cin>>n;
 	getchar();
-
 	getline(cin,b);
 	b=' '+b;
 	int p=0;
