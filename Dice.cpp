@@ -12,45 +12,53 @@ typedef pair<long long, long long> pll;
 //double 型memset最大127，最小128
 const int INF = 0x3f3f3f3f;         //int型的INF
 const ll llINF = 0x3f3f3f3f3f3f3f3f;//ll型的llINF
-const int N = 5e5 + 10;
-const int mod=1e9+7;
-int dp[N];
-int r[N],s[N],x[N],a[N];
-
+const int N = 1e6 + 10;
+double dp[N],sum[N];
 ll fastmi(ll base,ll power)
 {
 	ll ans=1;
 	while(power)
 		{
-			if(power&1)ans=ans*base%mod;
-			power>>=1,base=base*base%mod;
+			if(power&1)ans=ans*base;
+			power>>=1,base=base*base;
 		}
 	return ans;
 }
 void mysolve()
 {
-	int n,q;
-	cin>>n>>q;
-	for(int i=1; i<=n; ++i)cin>>r[i]>>s[i]>>x[i]>>a[i];
-	dp[1]=0;
-	for(int i=1; i<=n; ++i)
+	int t;
+	while(cin>>t)
 		{
-			int p1=s[i]*fastmi(r[i],mod-2)%mod;//p1是1/pi
-			dp[i+1]=((a[i]+dp[i])*p1%mod+(1-p1+mod)%mod*dp[x[i]]%mod)%mod;
-		}
-	int x,y;
-	while(q--)
-		{
-			cin>>x>>y;
-			cout<<(dp[y]-dp[x]+mod)%mod<<endl;
+			int op,m,n;
+			for(int i=1; i<=t; ++i)
+				{
+					cin>>op>>m>>n;
+					if(!op)
+						{
+							double ans=1.0;
+							if(m>1)ans=(1-fastmi(m,n))*1.0/(1.0-m);
+							printf("%.9lf\n",ans);
+						}
+					else
+						{
+							dp[1]=1.0;
+							for(int i=1; i<n; ++i)
+								{
+									sum[i]=sum[i-1]+dp[i];
+									dp[i+1]=(m*(dp[i]+1)-sum[i])*1.0/(m*1.0-i);
+								}
+
+							printf("%.9lf\n",dp[n]);
+						}
+				}
 		}
 }
 
 int32_t main()
 {
-	std::ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+	//std::ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
 	ll t=1;
-	cin >> t;
+	//cin >> t;
 	while (t--)
 		{
 			mysolve();

@@ -2,8 +2,6 @@
 using namespace std;
 #define ll               long long
 #define endl             "\n"
-#define int              long long
-#define endll            endl<<endl
 typedef unsigned long long ull;
 typedef pair<int, int> pii;
 typedef pair<long long, long long> pll;
@@ -12,38 +10,31 @@ typedef pair<long long, long long> pll;
 //double 型memset最大127，最小128
 const int INF = 0x3f3f3f3f;         //int型的INF
 const ll llINF = 0x3f3f3f3f3f3f3f3f;//ll型的llINF
-const int N = 5e5 + 10;
-const int mod=1e9+7;
-int dp[N];
-int r[N],s[N],x[N],a[N];
+const int N = 35;
 
-ll fastmi(ll base,ll power)
-{
-	ll ans=1;
-	while(power)
-		{
-			if(power&1)ans=ans*base%mod;
-			power>>=1,base=base*base%mod;
-		}
-	return ans;
-}
+ll ans;
+int n,m,a[N][N];
+int dp[N][N][2000];
+int tt=0;
 void mysolve()
 {
-	int n,q;
-	cin>>n>>q;
-	for(int i=1; i<=n; ++i)cin>>r[i]>>s[i]>>x[i]>>a[i];
-	dp[1]=0;
-	for(int i=1; i<=n; ++i)
-		{
-			int p1=s[i]*fastmi(r[i],mod-2)%mod;//p1是1/pi
-			dp[i+1]=((a[i]+dp[i])*p1%mod+(1-p1+mod)%mod*dp[x[i]]%mod)%mod;
-		}
-	int x,y;
-	while(q--)
-		{
-			cin>>x>>y;
-			cout<<(dp[y]-dp[x]+mod)%mod<<endl;
-		}
+	cin>>n>>m;
+	for(int i=1; i<=n; ++i)for(int j=1; j<=m; ++j)cin>>a[i][j];
+	memset(dp,0x3f,sizeof(dp));
+	dp[1][1][a[1][1]]=a[1][1]*a[1][1];
+	for(int i=1; i<=n; ++i)for(int j=1; j<=m; ++j)for(int k=0; k<=1800; ++k)
+				{
+					if(dp[i][j][k]<INF)
+						{
+							if(i<n)dp[i+1][j][k+a[i+1][j]]=min(dp[i+1][j][k+a[i+1][j]],dp[i][j][k]+a[i+1][j]*a[i+1][j]);
+							if(j<m)dp[i][j+1][k+a[i][j+1]]=min(dp[i][j+1][k+a[i][j+1]],dp[i][j][k]+a[i][j+1]*a[i][j+1]);
+						}
+				}
+	int ans=INF;
+	for(int i=0; i<=1800; ++i)if(dp[n][m][i]<INF)ans=min(ans,(n+m-1)*dp[n][m][i]-i*i);
+	cout<<"Case #"<<++tt<<": ";
+	cout<<ans<<endl;
+
 }
 
 int32_t main()
