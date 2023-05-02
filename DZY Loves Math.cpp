@@ -3,63 +3,44 @@ using namespace std;
 #define ll               long long
 #define endl             "\n"
 #define int              long long
-#define endll            endl<<endl
-typedef unsigned long long ull;
-typedef pair<int, int> pii;
-typedef pair<long long, long long> pll;
-//---------------------------------------------------------------------------------------------------------------------//
-//---------------------------------------------------------------------------------------------------------------------//
-//double 型memset最大127，最小128
-const int INF = 0x3f3f3f3f;         //int型的INF
-const ll llINF = 0x3f3f3f3f3f3f3f3f;//ll型的llINF
 const int N = 2e4 + 10;
-vector<int>at[N];
-int n,m,len,ans;
-
-int getcnt(int x,int val)
+int len,ans,n,m;;
+vector<int>cnt[N];
+int tocnt(int x,int val)//upper_bound返回所有小于等于val个数的子集
 {
-	int cnt=-1,l=0,r=(int)at[x].size()-1;
-	while(l<=r)
-		{
-			int mid=l+((r-l)>>1);
-			if(at[x][mid]<=val)cnt=mid,l=mid+1;
-			else r=mid-1;
-		}
-	return cnt+1;
+	return upper_bound(cnt[x].begin(),cnt[x].end(),val)-cnt[x].begin();
 }
 
 void dfs(int pos,int a,int b)
 {
 	if(pos==len)
-		{
-			int sum=b-a,L=b-n,R=m-a;
-			if(!a)R=min(R,b-1),L=max(1ll,L);
-			if(L>R)return;
-			ans+=__gcd(a,b)*(getcnt(sum,R)-getcnt(sum,L-1));
-			//	cout<<a<<" "<<b<<" "<<ans<<endl;
-			return;
-		}
+	{
+		int sum=b-a,l=b-n,r=m-a;
+		if(!a)l=max(1ll,l),r=min(r,b-1);
+		if(l>r)return;
+		ans+=__gcd(a,b)*(tocnt(sum,r)-tocnt(sum,l-1));//划分上下限求贡献
+		return;
+	}
 	dfs(pos+1,a,b);
 	dfs(pos+1,a,b|(1<<pos));
-	if((a|(1<<pos))<=m)dfs(pos+1,a|(1<<pos),b|(1<<pos));
+	if((a|(1<<pos))<=m)dfs(pos+1,a|(1<<pos),b|(1<<pos));//dfs枚举a,b组合情况
 }
-
 void mysolve()
 {
 	cin>>n>>m;
 	if(n<m)swap(n,m);
-	ans=0,len=0;
-	while((1<<len)<=n)len++;
+	len=ans=0;
+	while((1<<len)<=n)len++;//取二进制最长长度
 	for(int i=0; i<(1<<len); ++i)
+	{
+		cnt[i].clear();
+		for(int j=i; ; j=(j-1)&i)//枚举二进制子集
 		{
-			at[i].clear();
-			for(int j=i; ; j=(j-1)&i)
-				{
-					at[i].push_back(j);
-					if(!j)break;
-				}
-			sort(at[i].begin(),at[i].end());
+			cnt[i].push_back(j);
+			if(!j)break;
 		}
+		sort(cnt[i].begin(),cnt[i].end());//排序使后面可以二分
+	}
 	dfs(0,0,0);
 	cout<<ans<<endl;
 }
@@ -70,9 +51,9 @@ int32_t main()
 	ll t=1;
 	cin >> t;
 	while (t--)
-		{
-			mysolve();
-		}
+	{
+		mysolve();
+	}
 	system("pause");
 	return 0;
 }
