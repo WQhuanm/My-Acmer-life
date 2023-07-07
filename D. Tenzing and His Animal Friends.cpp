@@ -10,43 +10,51 @@ typedef pair<int, int> pii;
 //double 型memset最大127，最小128
 //---------------------------------------------------------------------------------------------------------------------//
 //---------------------------------------------------------------------------------------------------------------------//
-const int N = 3e5 + 10;
+const int N = 110;
 const int mod = 998244353;
-vector<int>edge[N];
 
+int dp[N][N];
+bool vis[N];
 void mysolve()
 {
-	int n, m, x, y, w;
+	int n, m;
 	cin >> n >> m;
-	vector<int>a(n + 1, inf);
-	for (int i = 1; i <= m; ++i)-
+
+	for (int i = 1; i <= n; ++i)for (int j = 1; j <= n; ++j)if (i != j)dp[i][j] = INF;
+	int x, y, w;
+	while (m--)
 		{
 			cin >> x >> y >> w;
-			edge[x].push_back(y), edge[y].push_back(x);
-			a[x] = min(a[x], w), a[y] = min(a[y], w);
+			dp[x][y] = dp[y][x] = min(dp[x][y], w);
 		}
-	for (int i = 1; i <= n; ++i)if (a[i] == inf)
-			{
-				cout << "inf" << endl;
-				return;
-			}
-	vector<bool>vis(n + 1);
-
-	vector<pair<string, int>>v;
-	ll ans = 0;
-	for (int i = 1; i <= n; ++i)if (!vis[i])
-			{
-				vis[i] = 1;
-				for (auto v : edge[i])vis[v] = 1;
-				string s;
-				for (int j = 1; j <= n; ++j)s.push_back((j == i ? '1' : '0'));
-				v.push_back({s, a[i]});
-				ans += a[i];
-			}
-	cout << (int)v.size() << " " << ans << endl;
-	for (auto [s, k] : v)
+	for (int k = 1; k <= n; ++k)for (int i = 1; i <= n; ++i)for (int j = 1; j <= n; ++j)dp[i][j] = min(dp[i][j], dp[i][k] + dp[k][j]);
+	if (dp[1][n] > 1e18)
 		{
-			cout << s << " " << k << endl;
+			cout << "inf" << endl;
+			return;
+		}
+
+	vector<pii>v(n + 1);
+	for (int i = 1; i <= n; ++i)v[i] = { dp[1][i], i};
+	sort(v.begin() + 1, v.end());
+	vis[1] = 1;
+	string s(n, '0');
+	ll sum = 0;
+	vector<pair<string, int>>ans;
+	for (int i = 1; i < (int)v.size() - 1; ++i)
+		{
+			int u = v[i].second, p = v[i + 1].second;
+			if (u == n)break;
+			s[u - 1] = '1';
+			int t = dp[1][p] - dp[1][u];
+			sum += t;
+			if (t)
+				ans.push_back({s, t});
+		}
+	cout << sum << " " << (int)ans.size() << endl;
+	for (auto [val, k] : ans)
+		{
+			cout << val << " " << k << endl;
 		}
 }
 
