@@ -40,7 +40,7 @@ struct line_tree
 	{
 		int ls, rs;
 		node w;
-	} t[M * 40];
+	} t[M * 20];
 	int tot = 0;
 	void init()
 	{
@@ -54,20 +54,19 @@ struct line_tree
 		t[p].w = max(t[t[p].ls].w, t[t[p].rs].w);
 	}
 
-	void insert(int l, int r, node w, int &p)
+	void update(int l, int r, node w, int &p)
 	{
 		if (!p)p = ++tot;
 		if (l == r)return t[p].w = t[p].w + w, void();
 		int mid = l + ((r - l) >> 1);
-		if (w.val <= mid)insert(l, mid, w, t[p].ls);
-		else insert(mid + 1, r, w, t[p].rs);
+		if (w.val <= mid)update(l, mid, w, t[p].ls);
+		else update(mid + 1, r, w, t[p].rs);
 		pushup(p);
 	}
 
-	void merge(int l, int r, int&p, int&p2)
+	void merge(int l, int r, int&p, int p2)
 	{
-		if (!p2)return;
-		if (!p)return p = p2, void();
+		if (!p || !p2)return p = p | p2, void();
 		if (l == r)return t[p].w = t[p].w + t[p2].w, void();
 		int mid = l + ((r - l) >> 1);
 		merge(l, mid, t[p].ls, t[p2].ls), merge(mid + 1, r, t[p].rs, t[p2].rs);
@@ -105,7 +104,7 @@ void dfs(int u, int f)
 				lt.merge(0, M, number[u], number[v]);
 			}
 	for (auto w : c[u])
-		lt.insert(0, M, w, number[u]);
+		lt.update(0, M, w, number[u]);
 	ans[u] = lt.t[number[u]].w.val;
 }
 
